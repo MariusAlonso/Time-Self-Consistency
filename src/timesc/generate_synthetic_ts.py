@@ -23,25 +23,19 @@ def generate_ar(length, coef, noise_std):
 def make_synthetic_series(num_series: int, length: int) -> np.ndarray:
     """
     Return shape (num_series, length) of float values in [-1,1]
-    Each series is random mixture of sinusoids and AR behaviour, normalized/clipped to [-1,1].
+    Each series is random mixture of sinusoids. A random walk is added.
     """
     out = np.zeros((num_series, length), dtype=np.float32)
     for i in range(num_series):
-        if random.random() < 1.0:
-            # sinusoidal dominant
-            n_components = random.randint(1, 3)
-            s = np.zeros(length, dtype=np.float32)
-            for _ in range(n_components):
-                freq = random.uniform(0.001, 0.05)
-                phase = random.uniform(0, 2 * math.pi)
-                amp = random.uniform(0.1, 1.0)
-                noise = random.uniform(0.0, 0.1)
-                s += generate_sinusoid(length, freq, phase, amp, noise)
-        else:
-            # AR process
-            coef = random.uniform(-0.95, 0.95)
-            noise_std = random.uniform(0.01, 0.1)
-            s = generate_ar(length, coef, noise_std)
+        # sinusoidal dominant
+        n_components = random.randint(1, 3)
+        s = np.zeros(length, dtype=np.float32)
+        for _ in range(n_components):
+            freq = random.uniform(0.001, 0.05)
+            phase = random.uniform(0, 2 * math.pi)
+            amp = random.uniform(0.1, 1.0)
+            noise = random.uniform(0.0, 0.1)
+            s += generate_sinusoid(length, freq, phase, amp, noise)
 
         rw = np.cumsum(np.random.normal(0, random.uniform(0.001, 0.05), length))
         s = s + rw
