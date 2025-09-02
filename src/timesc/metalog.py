@@ -222,6 +222,7 @@ def transform(x):
 
 
 import torch
+import tqdm
 
 
 def quantile_trajectory_sampling(X_full, C, P, prediction_fn):
@@ -246,7 +247,7 @@ def quantile_trajectory_sampling(X_full, C, P, prediction_fn):
     T = 1.0
     preds = []
     full_ymt = []
-    for i in range(P):
+    for i in tqdm.tqdm(range(P)):
         # if i < F:
         #     Y = np.concatenate([
         #         Y,
@@ -255,8 +256,6 @@ def quantile_trajectory_sampling(X_full, C, P, prediction_fn):
         #     continue
 
         Y = Y.reshape(1, -1, Y.shape[-1])
-
-        print(i)
 
         y_mt = prediction_fn(
             torch.Tensor(Y[0]),
