@@ -14,7 +14,7 @@ def sample_tempered_metalog(Qs, ridge):
     )[0](np.random.uniform(0, 1, 1))[None, None, :]
 
 
-def quantile_remap(Qemp, Qtrue)
+def quantile_remap(Qemp, Qtrue):
     A = np.sum(
         (Qemp - np.mean(Qemp, axis=1, keepdims=True))
         * (Qtrue - np.mean(Qtrue, axis=1, keepdims=True)),
@@ -26,6 +26,7 @@ def quantile_remap(Qemp, Qtrue)
     A, B = A[:, None, None], B[:, None, None]
 
     return A, B
+
 
 def quantile_trajectory_sampling(
     X_full,
@@ -109,18 +110,14 @@ def quantile_trajectory_sampling(
             Qtrue, Qemp = (
                 Ymt[:, C + i, :],
                 np.quantile(
-                    full_ymt[-1][:, :, i, :].reshape(64, -1)[:, :],
+                    full_ymt[-1][:, :, i, :].reshape(len(X_full), -1)[:, :],
                     np.linspace(0.1, 0.9, 9),
                     axis=1,
                 ).T,
             )
 
             A, B = quantile_remap(Qemp, Qtrue)
-            subset = np.random.choice(
-                N,
-                int(frac_quantile_remap * N),
-                replace=False
-            )
+            subset = np.random.choice(N, int(frac_quantile_remap * N), replace=False)
 
             y = y.reshape(-1, N, 9)
             y[:, subset, :] = y[:, subset, :] + (
@@ -137,8 +134,11 @@ def quantile_trajectory_sampling(
                 try:
                     s = sample_tempered_metalog(Qs, ridge_reg)
                     break
-                except:
+                except Exception as e:
                     ridge_reg = 10 * ridge_reg
+
+                    if ridge_reg > 1e20:
+                        raise e
 
             sampled.append(itransform(s))
 
@@ -146,5 +146,7 @@ def quantile_trajectory_sampling(
         Y = np.concatenate([Y, y[None, :, 0, :]], axis=-1)
 
         Y = Y.reshape(-1, N, Y.shape[-1])
+
+    full_ymt.append(np.repeat(Y[:, :, :, None], 9, axis=3)[:, :, C : C + P, :])
 
     return Y, Ymt, full_ymt
